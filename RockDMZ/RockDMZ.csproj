@@ -9,14 +9,14 @@
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="6.1.1" />
+    <PackageReference Include="AutoMapper" Version="6.2.2" />
     <PackageReference Include="AutoMapper.EF6" Version="1.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="2.0.1" />
     <PackageReference Include="BundlerMinifier.Core" Version="2.4.337" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="7.1.0" />
-    <PackageReference Include="Google.Apis.Analytics.v3" Version="1.27.1.810" />
-    <PackageReference Include="Google.Apis.AnalyticsReporting.v4" Version="1.27.1.881" />
-    <PackageReference Include="Google.Apis.Auth.Mvc" Version="1.27.1" />
+    <PackageReference Include="Google.Apis.Analytics.v3" Version="1.32.2.1075" />
+    <PackageReference Include="Google.Apis.AnalyticsReporting.v4" Version="1.32.2.1136" />
+    <PackageReference Include="Google.Apis.Auth.Mvc" Version="1.32.2" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.6.14" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.6.14" />
     <PackageReference Include="HtmlTags.AspNetCore" Version="4.2.0" />
