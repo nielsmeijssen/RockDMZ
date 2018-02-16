@@ -1,0 +1,152 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.ApiDatatable
+@model EditLaunch.Model
+@{
+    ViewBag.Title = "Edit";
+}
+@section JavaScript
+{
+    <script language="javascript">
+        $(function () {
+
+            var $table = $('table').tablesorter({
+                theme: 'blue',
+                widgets: ["zebra", "filter"],
+                widgetOptions: {
+                    // filter_anyMatch replaced! Instead use the filter_external option
+                    // Set to use a jQuery selector (or jQuery object) pointing to the
+                    // external filter (column specific or any match)
+                    filter_external: '.search',
+                    // add a default type search to the first name column
+                    filter_defaultFilter: { 1: '~{query}' },
+                    // include column filters
+                    filter_columnFilters: true,
+                    filter_placeholder: { search: 'Search...' },
+                    filter_saveFilters: true,
+                    filter_reset: '.reset'
+                }
+            });
+
+            // make demo search buttons work
+            $('button[data-column]').on('click', function () {
+                var $this = $(this),
+                    totalColumns = $table[0].config.columns,
+                    col = $this.data('column'), // zero-based index or "all"
+                    filter = [];
+
+                // text to add to filter
+                filter[col === 'all' ? totalColumns : col] = $this.text();
+                $table.trigger('search', [filter]);
+                return false;
+            });
+
+        });
+    </script>
+}
+<h2>Launch</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>API Datatable - Select Views</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.Input(model => model.Id)
+        <div class="form-group">
+            <label asp-for="Name" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.Name)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ServiceAccountId" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ServiceAccount.ServiceName)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="FirstDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.FirstDate)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="LastDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.LastDate)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="IncludeDateOfDownload" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.IncludeDateOfDownload)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ReloadBufferSizeInDays" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ReloadBufferSizeInDays)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="UpdateSchedule" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.UpdateSchedule)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="LookbackWindowInDays" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.LookbackWindowInDays)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="CsvViewIds" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.CsvViewIds)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ApiQuery" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ApiQuery)
+            </div>
+        </div>
+        @if (Model.ApiResults.Count > 0) {
+        <table class="tablesorter">
+            <thead>
+                <tr>
+                    @{ 
+                        var c = Model.ApiResults.FirstOrDefault();
+                        foreach (var header in c)
+                        {
+                            <td>@header</td>
+                        }
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                    @{ 
+                        for (var i = 1; i < Model.ApiResults.Count; i++)
+                        {
+                            <tr>
+                                @foreach (var columnValue in Model.ApiResults[i])
+                                {
+                                    <td>@columnValue</td>
+                                }
+                            </tr>
+                        }
+                    }
+            </tbody>
+        </table>
+        }
+                    <div class="form-group">
+                        <div class="col-md-offset-2 col-md-10">
+                            <input type="submit" value="Launch" class="btn btn-default" />
+                        </div>
+                    </div>
+    </div>
+}

@@ -1,0 +1,40 @@
+﻿@using RockDMZ.Features
+@model RockDMZ.Features.ServiceAccount.Details.Model
+@{
+    ViewBag.Title = "Details";
+}
+<h2>Details</h2>
+<div>
+    <h4>Service Accounts</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayLabel(model => model.Id)
+        </dt>
+        <dd>
+            @Html.Display(model => model.Id)
+        </dd>
+        <dt>
+            Service name
+        </dt>
+        <dd>
+            @Html.Display(model => model.ServiceName)
+        </dd>
+        <dt>
+            Credential type
+        </dt>
+        <dd>
+            @Html.Display(model => model.CredentialType)
+        </dd>
+        <dt>
+            @Html.DisplayLabel(model => model.Email)
+        </dt>
+        <dd>
+            @Html.Display(model => model.Email)
+        </dd>
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.Id }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

@@ -1,0 +1,59 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.ApiDatatable
+@model Create.Command
+@{
+    ViewBag.Title = "Create";
+}
+<h2>Create</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>API Datatable</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.FormBlock(m => m.Name)
+        <div class="form-group">
+            <label asp-for="ServiceAccountId" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <select asp-for="ServiceAccountId" asp-items="Model.ServiceAccounts" class="form-control"></select>
+                <span asp-validation-for="ServiceAccountId" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="FirstDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="FirstDate" asp-items="Model.FirstDate" class="form-control datepicker" />
+                <span asp-validation-for="FirstDate" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="LastDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="LastDate" asp-items="Model.LastDate" class="form-control datepicker" />
+                <span asp-validation-for="LastDate" class="text-danger"></span>
+            </div>
+        </div>
+        @Html.FormBlock(m => m.IncludeDateOfDownload)
+        @Html.FormBlock(m => m.ReloadBufferSizeInDays)
+        <div class="form-group">
+            <label asp-for="UpdateSchedule" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <select asp-for="UpdateSchedule" asp-items="Html.GetEnumSelectList<UpdateSchedule>()" class="form-control"></select>
+                <span asp-validation-for="UpdateSchedule" class="text-danger"></span>
+            </div>
+        </div>
+        @Html.FormBlock(m => m.LookbackWindowInDays)
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+<div>
+    @Html.ActionLink("Back to List", nameof(ApiDatatableController.Index))
+</div>

@@ -1,0 +1,61 @@
+﻿@model RockDMZ.Features.ApiDatatable.Index.Result
+@{
+    ViewBag.Title = "API Datatables";
+}
+<h2>API Datatables</h2>
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            Id
+        </th>
+        <th>
+            Name
+        </th>
+        <th>
+            URL
+        </th>
+        <th>
+            Last Download
+        </th>
+        <th>
+            Last Date
+        </th>
+        <th>
+            Active
+        </th>
+        <th></th>
+    </tr>
+    @{ int i = 0;}
+    @foreach (var item in Model.ApiDatatables)
+    {
+        <tr>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].Id)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].Name)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].Url)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].LastDownload)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].LastDateDownloaded)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ApiDatatables[i].IsActive)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+            </td>
+        </tr>
+        i++;
+    }
+</table>

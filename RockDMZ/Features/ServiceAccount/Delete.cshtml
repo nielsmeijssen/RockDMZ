@@ -1,0 +1,47 @@
+﻿@using RockDMZ.Features
+@model RockDMZ.Features.ServiceAccount.Delete.Command
+@{
+    ViewBag.Title = "Delete";
+}
+<h2>Delete</h2>
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Service Account</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayLabel(model => model.Id)
+        </dt>
+        <dd>
+            @Html.Display(model => model.Id)
+        </dd>
+        <dt>
+            Service name
+        </dt>
+        <dd>
+            @Html.Display(model => model.ServiceName)
+        </dd>
+        <dt>
+            Credential type
+        </dt>
+        <dd>
+            @Html.Display(model => model.CredentialType)
+        </dd>
+        <dt>
+            @Html.DisplayLabel(model => model.Email)
+        </dt>
+        <dd>
+            @Html.Display(model => model.Email)
+        </dd>
+    </dl>
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.Input(m => m.Id)
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" /> |
+            @Html.ActionLink("Back to List", "Index")
+        </div>
+    }
+</div>

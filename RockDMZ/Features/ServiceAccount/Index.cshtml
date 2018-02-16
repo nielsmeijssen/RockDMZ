@@ -1,0 +1,55 @@
+﻿@model RockDMZ.Features.ServiceAccount.Index.Result
+@{
+    ViewBag.Title = "Service Accounts";
+}
+<h2>Service Accounts</h2>
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<form method="GET">
+    <p>
+        Select Service: @Html.Input(m => m.SelectedServiceName).RemoveClass("form-control")
+        <input type="submit" value="Filter" />
+    </p>
+</form>
+<table class="table">
+    <tr>
+        <th>
+            Id
+        </th>
+        <th>
+            Service name
+        </th>
+        <th>
+            CredentialType
+        </th>
+<th>
+            Email
+        </th>
+        <th></th>
+    </tr>
+    @{ int i = 0;}
+    @foreach (var item in Model.ServiceAccounts)
+    {
+        <tr>
+            <td>
+                @Html.Display(modelItem => modelItem.ServiceAccounts[i].Id)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ServiceAccounts[i].ServiceName)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ServiceAccounts[i].CredentialType)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.ServiceAccounts[i].Email)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+            </td>
+        </tr>
+        i++;
+    }
+</table>

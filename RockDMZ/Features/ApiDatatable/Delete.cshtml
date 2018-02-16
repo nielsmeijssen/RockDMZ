@@ -1,0 +1,81 @@
+﻿@using RockDMZ.Features
+@model RockDMZ.Features.ApiDatatable.Delete.Command
+@{
+    ViewBag.Title = "Delete";
+}
+<h2>Delete</h2>
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Service Account</h4>
+    <hr />
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.Input(m => m.Id)
+        <div class="form-group">
+            <label asp-for="Name" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.Name)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ServiceAccountId" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ServiceAccount.ServiceName)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="FirstDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.FirstDate)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="LastDate" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.LastDate)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="IncludeDateOfDownload" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.IncludeDateOfDownload)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ReloadBufferSizeInDays" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ReloadBufferSizeInDays)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="UpdateSchedule" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.UpdateSchedule)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="LookbackWindowInDays" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.LookbackWindowInDays)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="CsvViewIds" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.CsvViewIds)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="ApiQuery" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.ApiQuery)
+            </div>
+        </div>
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" /> |
+            @Html.ActionLink("Back to List", "Index")
+        </div>
+    }
+</div>
