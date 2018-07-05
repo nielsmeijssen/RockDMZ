@@ -16,6 +16,7 @@
         <hr />
         @Html.ValidationDiv()
         @Html.Input(model => model.Id)
+        @Html.Input(model => model.ServiceName)
         @Html.FormBlock(m => m.Name)
         <div class="form-group">
             <label asp-for="ServiceAccountId" class="col-md-2 control-label"></label>

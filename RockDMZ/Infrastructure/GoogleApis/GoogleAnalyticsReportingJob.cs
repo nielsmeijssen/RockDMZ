@@ -50,7 +50,7 @@ namespace RockDMZ.Infrastructure.GoogleApis
 
         private ApiDatatable GetDatatable(int id)
         {
-            using (var db = new ToolsContext("Server=KOBUTO\\SQLEXPRESS;Database=RockDB;MultipleActiveResultSets=true;Integrated Security=SSPI;"))
+            using (var db = new ToolsContext())
             {
                 var dt = db.ApiDatatables.Include("ServiceAccount").SingleOrDefault(x => x.Id.Equals(id));
                 return dt;
@@ -59,7 +59,7 @@ namespace RockDMZ.Infrastructure.GoogleApis
 
         private void UpdateDatatable(int id, DateTime lastDateDownloaded)
         {
-            using (var db = new ToolsContext("Server=KOBUTO\\SQLEXPRESS;Database=RockDB;MultipleActiveResultSets=true;Integrated Security=SSPI;"))
+            using (var db = new ToolsContext())
             {
                 var dt = db.ApiDatatables.Include("ServiceAccount").SingleOrDefault(x => x.Id.Equals(id));
 

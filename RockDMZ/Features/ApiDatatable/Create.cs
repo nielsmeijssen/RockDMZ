@@ -72,7 +72,7 @@ namespace RockDMZ.Features.ApiDatatable
             {
                 var apiDatatable = Mapper.Map<Command, RockDMZ.Domain.ApiDatatable>(message);
                 var guid = Guid.NewGuid();
-                apiDatatable.Url = "https://files.rockdmz.com/datatables/" + guid + ".csv";
+                apiDatatable.Url = "http://www.searchtechnologies.nl/feeds/" + guid + ".csv";
                 apiDatatable.LocalFilePath = message.DatatablesDirectory + guid + ".csv";
                 _db.ApiDatatables.Add(apiDatatable);
                 _db.SaveChanges();

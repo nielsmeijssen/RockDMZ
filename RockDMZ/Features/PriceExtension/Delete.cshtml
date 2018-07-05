@@ -1,0 +1,27 @@
+﻿@using RockDMZ.Features
+@model RockDMZ.Features.PriceExtension.Delete.Command
+@{
+    ViewBag.Title = "Delete";
+}
+<h2>Delete</h2>
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Price Extension Project</h4>
+    <hr />
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.Input(m => m.Id)
+        <div class="form-group">
+            <label asp-for="Name" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.Name)
+            </div>
+        </div>
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" /> |
+            @Html.ActionLink("Back to List", "Index")
+        </div>
+    }
+</div>

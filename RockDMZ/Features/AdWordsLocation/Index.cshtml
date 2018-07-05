@@ -1,0 +1,55 @@
+﻿@model RockDMZ.Features.AdWordsLocation.Index.Result
+@{
+    ViewBag.Title = "AdWords Proximity Targeting";
+}
+<h2>AdWords Location Projects</h2>
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            Id
+        </th>
+        <th>
+            Name
+        </th>
+        <th>
+            KM Range
+        </th>
+        <th>
+            Multiple Results
+        </th>
+        <th>
+            Output Format
+        </th>
+        <th></th>
+    </tr>
+    @{ int i = 0;}
+    @foreach (var item in Model.AdWordsLocationProjects)
+    {
+        <tr>
+            <td>
+                @Html.Display(modelItem => modelItem.AdWordsLocationProjects[i].Id)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.AdWordsLocationProjects[i].Name)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.AdWordsLocationProjects[i].KmRange)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.AdWordsLocationProjects[i].MultipleResults)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.AdWordsLocationProjects[i].OutputFormat)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+            </td>
+        </tr>
+        i++;
+    }
+</table>

@@ -11,7 +11,7 @@
         $(function () {
 
             var $table = $('table').tablesorter({
-                theme: 'blue',
+                theme: '',
                 widgets: ["zebra", "filter"],
                 widgetOptions: {
                     // filter_anyMatch replaced! Instead use the filter_external option
@@ -72,8 +72,8 @@
             <div class="col-md-2"></div>
             <div class="col-md-8"><input class="search form-control" type="search" data-column="all" placeholder="Search..."></div>
         </div>
-        <table class="tablesorter">
-            <thead>
+        <table class="table tablesorter table-hover table-condensed table-sm">
+            <thead class="thead-dark">
                 <tr>
                     <th></th>
                     <th>Id</th>
@@ -86,22 +86,22 @@
             </thead>
             <tbody>
                 @foreach (var sv in Model.ApiColumns)
-                {
-                    <tr>
-                        <td>
-                            <input type="checkbox"
-                                   name="columnId"
-                                   value="@(sv.Type == "METRIC" ? "m|" + sv.Id : "d|" + sv.Id)"  
-                                   @(Html.Raw(sv.Selected ? "checked=\"checked\"" : "")) />
-                        </td>
-                        <td title="@sv.Description">@sv.Id</td>
-                        <td title="@sv.Description">@sv.uiName</td>
-                        <td>@sv.Type</td>
-                        <td>@sv.Group</td>
-                        <td>@sv.Status</td>
-                        <td title="@sv.Calculation">@(Html.Raw(sv.Calculation.Length > 0 ? "Y" : "-"))</td>
-                    </tr>
-                }
+        {
+            <tr>
+                <td>
+                    <input type="checkbox"
+                           name="columnId"
+                           value="@(sv.Type == "METRIC" ? "m|" + sv.Id : (sv.Type == "CUSTMDIMENSION" ? "cd|" + sv.Id : "d|" + sv.Id))"
+                           @(Html.Raw(sv.Selected ? "checked=\"checked\"" : "")) />
+                </td>
+                <td title="@sv.Description">@sv.Id</td>
+                <td title="@sv.Description">@sv.uiName</td>
+                <td>@sv.Type</td>
+                <td>@sv.Group</td>
+                <td>@sv.Status</td>
+                <td title="@sv.Calculation">@(Html.Raw(sv.Calculation.Length > 0 ? "Y" : "-"))</td>
+            </tr>
+}
             </tbody>
         </table>
         <div class="form-group">

@@ -1,0 +1,27 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.PriceExtension
+@model ImportData.Model
+@{
+    ViewBag.Title = "Edit";
+}
+
+<h2>Launch</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Price Extension Project</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.Input(model => model.Id)
+        
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Launch" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

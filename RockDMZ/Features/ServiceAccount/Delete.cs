@@ -45,6 +45,7 @@ namespace RockDMZ.Features.ServiceAccount
             public int Id { get; set; }
             public ServiceName ServiceName { get; set; }
             public CredentialType CredentialType { get; set; }
+            public string ServiceLocation { get; set; }
             public string Email { get; set; }
             public string Password { get; set; }
             public string KeyLocation { get; set; }

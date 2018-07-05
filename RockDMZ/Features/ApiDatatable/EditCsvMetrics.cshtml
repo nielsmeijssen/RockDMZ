@@ -1,0 +1,105 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.ApiDatatable
+@model EditCsvMetrics.Result
+@{
+    ViewBag.Title = "Edit";
+}
+@section JavaScript
+    {
+    <script language="javascript">
+        $(function () {
+
+            var $table = $('table').tablesorter({
+                theme: 'blue',
+                widgets: ["zebra", "filter"],
+                widgetOptions: {
+                    // filter_anyMatch replaced! Instead use the filter_external option
+                    // Set to use a jQuery selector (or jQuery object) pointing to the
+                    // external filter (column specific or any match)
+                    filter_external: '.search',
+                    // add a default type search to the first name column
+                    filter_defaultFilter: { 1: '~{query}' },
+                    // include column filters
+                    filter_columnFilters: true,
+                    filter_placeholder: { search: 'Search...' },
+                    filter_saveFilters: true,
+                    filter_reset: '.reset'
+                }
+            });
+
+            // make demo search buttons work
+            $('button[data-column]').on('click', function () {
+                var $this = $(this),
+                    totalColumns = $table[0].config.columns,
+                    col = $this.data('column'), // zero-based index or "all"
+                    filter = [];
+
+                // text to add to filter
+                filter[col === 'all' ? totalColumns : col] = $this.text();
+                $table.trigger('search', [filter]);
+                return false;
+            });
+
+        });
+    </script>
+}
+
+
+<h2>Edit .CSV Metrics</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>API Datatable - Edit Metrics &amp; Dimensions</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.Input(model => model.Id)
+
+        <div class="form-group">
+            <label asp-for="CsvMetricsDimensions" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                <input asp-for="CsvMetricsDimensions" asp-items="Model.CsvMetricsDimensions" class="form-control" />
+                <span asp-validation-for="CsvMetricsDimensions" class="text-danger"></span>
+            </div>
+        </div>
+        <div>
+            <p>Select any metric and dimension</p>
+        </div>
+        <div class="form-group">
+            <div class="col-md-2"></div>
+            <div class="col-md-8"><input class="search form-control" type="search" data-column="all" placeholder="Search..."></div>
+        </div>
+        <table class="tablesorter">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Column Index</th>
+                    <th>uiName</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sv in Model.ApiColumns)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox"
+                                   name="columnId"
+                                   value="@(sv.Id)"
+                                   @(Html.Raw(sv.Selected ? "checked=\"checked\"" : "")) />
+                        </td>
+                        <td title="@sv.Id">@sv.Id</td>
+                        <td title="@sv.uiName">@sv.uiName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Submit" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

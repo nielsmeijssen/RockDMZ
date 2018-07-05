@@ -1,0 +1,47 @@
+﻿@model RockDMZ.Features.PromotionExtension.Index.Result
+@{
+    ViewBag.Title = "Promotion Extension Projects";
+}
+<h2>Promotion Extension Projects</h2>
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table tablesorter table-hover table-condensed table-sm">
+    <thead class="thead-dark">
+        <tr>
+            <th>
+                Id
+            </th>
+            <th>
+                Project name
+            </th>
+            <th>
+                Location
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ int i = 0;}
+        @foreach (var item in Model.PromotionExtensions)
+    {
+        <tr>
+            <td>
+                @Html.Display(modelItem => modelItem.PromotionExtensions[i].Id)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.PromotionExtensions[i].Name)
+            </td>
+            <td>
+                @Html.Display(modelItem => modelItem.PromotionExtensions[i].PromotionExtensionFeedDestinationLocation)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
+                @Html.ActionLink("Details", "Details", new { id = item.Id }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+            </td>
+        </tr>
+    i++;
+}
+    </tbody>
+</table>

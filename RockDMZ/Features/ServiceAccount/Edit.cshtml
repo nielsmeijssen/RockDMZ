@@ -30,6 +30,7 @@
                 <span asp-validation-for="CredentialType" class="text-danger"></span>
             </div>
         </div>
+        @Html.FormBlock(m => m.ServiceLocation)
         @Html.FormBlock(m => m.Email)
         @Html.FormBlock(m => m.Password)
         <div class="form-group">

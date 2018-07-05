@@ -20,6 +20,7 @@
                 .ForMember(dest => dest.ServiceAccount, opt => opt.Ignore());
             CreateMap<ApiDatatable, Edit.Command>()
                 .ForMember(dest => dest.ServiceAccounts, y => y.Ignore())
+                .ForMember(dest => dest.ServiceName, y => y.Ignore())
                 .ReverseMap();
             CreateMap<ApiDatatable, EditLaunch.Model>()
                 .ForMember(dest => dest.ApiResults, y => y.Ignore())

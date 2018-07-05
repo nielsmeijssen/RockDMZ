@@ -14,6 +14,10 @@
         [Display(Name = "Credential type")]
         public CredentialType CredentialType { get; set; }
 
+        [Display(Name = "Service Location")]
+        [StringLength(255)]
+        public string ServiceLocation { get; set; }
+
         [StringLength(50, MinimumLength = 5)]
         public string Email { get; set; }
 
@@ -29,7 +33,7 @@
         // public virtual ICollection<ApiSuckDefinition> ApiSuckDefinitions { get; set; } = new List<ApiSuckDefinition>();
     }
 
-    public enum ServiceName { GoogleAnalytics }
+    public enum ServiceName { GoogleAnalytics, CsvFeedAppend, BCCLocalInventoryFeed, CsvFeedOverwrite, BCCLocalProductFeed, BCCStoreStockTextAds, BCCCategoryLevelBusinessData, BCCProductLevelBusinessData, BCCPromotionFeed }
 
-    public enum CredentialType { WebUser, Service  }
+    public enum CredentialType { WebUser, Service, NotApplicable, FTP }
 }

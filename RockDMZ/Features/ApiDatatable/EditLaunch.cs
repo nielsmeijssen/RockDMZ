@@ -19,6 +19,16 @@ using Google.Apis.AnalyticsReporting.v4.Data;
 using Hangfire;
 using System.Text;
 using RockDMZ.Infrastructure.GoogleApis;
+using System.Net;
+using CsvHelper;
+using FluentFTP;
+using System.Xml;
+using RockDMZ.Infrastructure.CsvFeed;
+using RockDMZ.Infrastructure.BccInventoryFeed;
+using RockDMZ.Infrastructure.BccLocalProductFeed;
+using RockDMZ.Infrastructure.BccStoreStockTextAds;
+using RockDMZ.Infrastructure.BccCategoryLevelBusinessData;
+using RockDMZ.Infrastructure.BccProductLevelBusinessData;
 
 namespace RockDMZ.Features.ApiDatatable
 {
@@ -28,6 +38,7 @@ namespace RockDMZ.Features.ApiDatatable
         {
             public int? Id { get; set; }
             public string JsonSecret { get; set; }
+            public string DatatablesDirectory { get; set; }
         }
 
         public class Validator : AbstractValidator<Query>
@@ -72,40 +83,117 @@ namespace RockDMZ.Features.ApiDatatable
             {
                 var rtn = await _db.ApiDatatables.Include("ServiceAccount").Where(i => i.Id == message.Id).ProjectToSingleOrDefaultAsync<Model>();
 
-                switch (rtn.ServiceAccount.CredentialType)
-                {
-                    case CredentialType.WebUser:
-                        var credential = GetCredential(rtn.ServiceAccount.Email, message.JsonSecret, rtn.ServiceAccount.KeyLocation).Result;
-                        using (var svc = new AnalyticsReportingService(
-                            new BaseClientService.Initializer
+                if (rtn.ServiceAccount.ServiceName == ServiceName.GoogleAnalytics)
+                { 
+                    switch (rtn.ServiceAccount.CredentialType)
+                    {
+                        case CredentialType.WebUser:
+                            var credential = GetCredential(rtn.ServiceAccount.Email, message.JsonSecret, rtn.ServiceAccount.KeyLocation).Result;
+                            using (var svc = new AnalyticsReportingService(
+                                new BaseClientService.Initializer
+                                {
+                                    HttpClientInitializer = credential,
+                                    ApplicationName = "RockDMZ" // "SearchTechnologies GA Data Sucker"
+                                }))
                             {
-                                HttpClientInitializer = credential,
-                                ApplicationName = "RockDMZ" // "SearchTechnologies GA Data Sucker"
-                            }))
-                        {
-                            var body = new GetReportsRequest();
-                            var requestItem = new ReportRequest();
-                            var firstDate = rtn.FirstDate.ToString("yyyy-MM-dd");
-                            var lastDate = rtn.FirstDate.AddDays(90).ToString("yyyy-MM-dd");
-                            DateRange dateRange = new DateRange() { StartDate = firstDate, EndDate = lastDate };
-                            requestItem.DateRanges = new List<DateRange>() { dateRange };
-                            requestItem.PageSize = 50;
-                            requestItem.SamplingLevel = "LARGE";
-                            requestItem.ViewId = "ga:" + rtn.CsvViewIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-                            requestItem.Metrics = GetMetrics(rtn.ApiQuery);
-                            requestItem.Dimensions = GetDimensions(rtn.ApiQuery);
-                            body.ReportRequests = new List<ReportRequest>() { requestItem };
-                            var reports = svc.Reports.BatchGet(body).Execute();
-                            rtn.ApiResults = GetReportsTable(reports.Reports, requestItem.ViewId);
-                            break;
-                        }
+                                var body = new GetReportsRequest();
+                                var requestItem = new ReportRequest();
+                                var firstDate = rtn.FirstDate.ToString("yyyy-MM-dd");
+                                var lastDate = rtn.FirstDate.AddDays(1).ToString("yyyy-MM-dd");
+                                DateRange dateRange = new DateRange() { StartDate = firstDate, EndDate = lastDate };
+                                requestItem.DateRanges = new List<DateRange>() { dateRange };
+                                requestItem.PageSize = 50;
+                                requestItem.SamplingLevel = "LARGE";
+                                requestItem.ViewId = "ga:" + rtn.CsvViewIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                                requestItem.Metrics = GetMetrics(rtn.ApiQuery);
+                                requestItem.Dimensions = GetDimensions(rtn.ApiQuery);
+                                body.ReportRequests = new List<ReportRequest>() { requestItem };
+                                var reports = svc.Reports.BatchGet(body).Execute();
+                                rtn.ApiResults = GetReportsTable(reports.Reports, requestItem.ViewId);
+                                break;
+                            }
                             
-                    default:
-                        break;
+                        default:
+                            break;
+                    }
+                }
+                if (rtn.ServiceAccount.ServiceName == ServiceName.CsvFeedAppend || rtn.ServiceAccount.ServiceName == ServiceName.CsvFeedOverwrite)
+                {
+                    // get feed
+                    var bccLocation = rtn.ServiceAccount.ServiceLocation;
+                    WebClient client = new WebClient();
+                    Stream stream = client.OpenRead(bccLocation);
+                    StreamReader reader = new StreamReader(stream);
+                    var data = reader.ReadToEnd();
+                    // transform feed into ApiResults object
+                    rtn.ApiResults = GetReportsTableFromCsv(data, rtn.ApiQuery, true);
+                }
+
+                if (rtn.ServiceAccount.ServiceName == ServiceName.BCCLocalInventoryFeed)
+                {
+                    // connect to the FTP server
+                    FtpClient client = new FtpClient();
+                    client.Host = "ftpservice.bcc.nl";
+                    client.Credentials = new NetworkCredential("ext.channable", "Starter123");
+                    client.DataConnectionType = FtpDataConnectionType.PASV;
+                    client.ReadTimeout = 30000;
+                    client.Connect();
+                    // download file
+                    var stream = new MemoryStream();
+                    if (client.Download(stream, "/PROD/Vergelijk-StoreStockCopy.xml"))
+                    {
+                        var data = System.Text.Encoding.Default.GetString(stream.GetBuffer());
+                        // transform feed into ApiResults object
+                        rtn.ApiResults = GetReportsTableFromBccInventoryFeed(data, true, message.DatatablesDirectory);
+                    }
+                    else
+                    {
+                        throw new Exception("Download failed");
+                    }
+                }
+
+                if (rtn.ServiceAccount.ServiceName == ServiceName.BCCLocalProductFeed)
+                {
+                    // connect to the FTP server
+                    FtpClient client = new FtpClient();
+                    client.Host = "ftpservice.bcc.nl";
+                    client.Credentials = new NetworkCredential("ext.channable", "Starter123");
+                    client.DataConnectionType = FtpDataConnectionType.PASV;
+                    client.ReadTimeout = 30000;
+                    client.Connect();
+                    // download file
+                    var stream = new MemoryStream();
+                    if (client.Download(stream, "/PROD/Vergelijk-StoreStockCopy.xml"))
+                    {
+                        var data = System.Text.Encoding.Default.GetString(stream.GetBuffer());
+                        // transform feed into ApiResults object
+                        rtn.ApiResults = GetReportsTableFromBccLocalProductsFeed(data, true, message.DatatablesDirectory);
+                    }
+                    else
+                    {
+                        throw new Exception("Download failed");
+                    }
+                }
+
+                if (rtn.ServiceAccount.ServiceName == ServiceName.BCCStoreStockTextAds)
+                {
+                    rtn.ApiResults = new List<List<string>>();
+                }
+
+                if (rtn.ServiceAccount.ServiceName == ServiceName.BCCCategoryLevelBusinessData)
+                {
+                    rtn.ApiResults = GetReportTableFromBccCategoryLevelBusinessData("");
+                }
+
+                if (rtn.ServiceAccount.ServiceName == ServiceName.BCCProductLevelBusinessData)
+                {
+                    rtn.ApiResults = new List<List<string>>();
                 }
 
                 return rtn;
             }
+
+            
 
             public static void GetGoogleApiReports(string email, string jsonSecret, string keyLocation, string viewIds, string apiQuery, DateTime startDate, DateTime endDate, string tempFileLocation, ref List<string> headers)
             {
@@ -411,6 +499,311 @@ namespace RockDMZ.Features.ApiDatatable
                 }
             }
 
+            static List<List<string>> GetReportsTableFromBccInventoryFeed(string data, bool downloadSample, string datatablesDirectory)
+            {
+                var rtn = new List<List<string>>(500000);
+                var counter = 0;
+                // get the latest bronfeed
+                var priceDict = new Dictionary<string, string>(500000);
+                var file = datatablesDirectory + "af82ace1-3ecd-4066-af79-e5e31976811f.csv";
+
+                using (TextReader fileReader = File.OpenText(file))
+                {
+                    var csv = new CsvReader(fileReader);
+                    var headers = csv.Parser.Read();
+                    // find the index of the id and the price field
+                    int priceIndex = -1;
+                    int idIndex = -1;
+                    for (var i = 0; i < headers.Length; i++)
+                    {
+                        if (headers[i] == "price") priceIndex = i;
+                        if (headers[i] == "id") idIndex = i;
+                    }
+                    // enumerate through the file and make dictionary with key:id and value:price
+                    while (true)
+                    {
+                        var row = csv.Parser.Read();
+                        if (row == null)
+                        {
+                            break;
+                        }
+                        var rowid = row[idIndex];
+                        var rowprice = row[priceIndex];
+
+                        if (!priceDict.ContainsKey(rowid)) priceDict.Add(rowid, rowprice);
+                    }
+                }
+                // add header
+                List<string> headerList = new List<string>();
+                headerList.Add("store code");
+                headerList.Add("itemid");
+                headerList.Add("quantity");
+                headerList.Add("price");
+                rtn.Add(headerList);
+                // read xml from data
+                var xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(data);
+                // transform xml to local products inventory csv format
+                XmlNodeList products = xmlDoc.GetElementsByTagName("product"); 
+                foreach (XmlNode product in products) // cycle the products collection
+                {
+                    var itemId = product.SelectSingleNode("Product_id").InnerText;
+
+                    // find the price for this item in "BCC Bron Feed (latest)"
+                    if (!priceDict.ContainsKey(itemId)) continue;
+                    var price = priceDict[itemId];
+
+                    XmlNodeList stores = product.SelectNodes("stockDetails");
+                    foreach(XmlNode store in stores)
+                    {
+                        var storeCode = store.Attributes.GetNamedItem("store_nb").Value.Trim(new[] { '0' });
+                        var quantity = store.Attributes.GetNamedItem("stock").Value;
+                        var r = new List<string>();
+                        r.Add(storeCode);
+                        r.Add(itemId);
+                        r.Add(quantity);
+                        r.Add(price);
+                        rtn.Add(r);
+                    }
+
+                    counter++;
+                    if (downloadSample && counter == 5) break;
+                }
+
+                return rtn;
+            }
+
+            static List<List<string>> GetReportTableFromBccCategoryLevelBusinessData(string data, bool downloadSample = false)
+            {
+                var items = new List<List<string>>();
+                var header = new List<string>();
+                var hashtable = new HashSet<string>();
+
+                var campaigns = new AdWordsCampaignStructure();
+                campaigns.CampaignTemplates = new List<AdWordsCampaignTemplate>();
+
+                var cGeneric = new AdWordsCampaignTemplate() { NameTemplate = "NB_Generiek_#CategoryLevel2Singular#" };
+                cGeneric.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "[#CategoryLevel3Singular#]" });
+                cGeneric.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "[#CategoryLevel3Plural#]" });
+                campaigns.CampaignTemplates.Add(cGeneric);
+
+                var cIntentH = new AdWordsCampaignTemplate() { NameTemplate = "NB_Intent-High_#CategoryLevel2Singular#" };
+                cIntentH.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "bestellen" });
+                cIntentH.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "kopen" });
+                cIntentH.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "online" });
+                campaigns.CampaignTemplates.Add(cIntentH);
+
+                var cIntentM = new AdWordsCampaignTemplate() { NameTemplate = "NB_Intent-Medium_#CategoryLevel2Singular#" };
+                cIntentM.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "aanbieding" });
+                cIntentM.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "goede" });
+                cIntentM.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "nieuw" });
+                cIntentM.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "vergelijk" });
+                campaigns.CampaignTemplates.Add(cIntentM);
+
+                var cBCC = new AdWordsCampaignTemplate() { NameTemplate = "NB_BCC_#CategoryLevel2Singular#" };
+                cBCC.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "[#CategoryLevel3Singular#]" });
+                cBCC.AdgroupTemplates.Add(new AdWordsAdgroupTemplate { NameTemplate = "[#CategoryLevel3Plural#]" });
+                campaigns.CampaignTemplates.Add(cBCC);
+
+
+                // create the join
+                using (var db = new ToolsContext())
+                {
+                    var input = (from i in db.BccSourceFeedItems
+                                 where i.AccountId == "BCC"
+                                 select new
+                                 {
+                                     i.ClientProductId,
+                                     i.CategoryLevel1,
+                                     i.CategoryLevel2,
+                                     i.CategoryLevel3,
+                                     i.Brand,
+                                     i.Price,
+                                     i.ProductName,
+                                     i.Type,
+                                     i.AccountId,
+                                     i.StockQuantity,
+                                     i.SourceFeedPromoLine,
+                                     i.PricePreviously
+                                 }).ToList();
+
+                    var customTagLines = db.AdWordsCustomTagLines.Where(x => x.ClientName == "BCC").ToList();
+
+                    foreach (var r in input)
+                    {
+                        var lac = new CategoryLevelBusinessDataItem();
+                        // set header once
+                        if (header.Count == 0) header = lac.Header;
+
+                        foreach (var ct in campaigns.CampaignTemplates)
+                        {
+                            var pt = r.CategoryLevel2.Replace(" en ", "-").Replace(" ", "-").Trim();
+                            lac.CampaignName = ct.NameTemplate.Replace("#CategoryLevel2Singular#", pt);
+                            lac.SetCategoryLevel1(r.CategoryLevel1);
+                            lac.SetCategoryLevel2(r.CategoryLevel2);
+                            lac.SetCategoryLevel3(r.CategoryLevel3);
+
+                            foreach (var ag in ct.AdgroupTemplates)
+                            {
+                                var adgroupName = ct.NameTemplate.Replace("", r.CategoryLevel3.ToLower());
+                                adgroupName = adgroupName.Replace("", lac.CategoryLevel3(true, "LC"));
+
+                                lac.AdgroupName = adgroupName;
+                                lac.CustomId = lac.CampaignName + "!" + lac.AdgroupName;
+
+                                foreach (var ctl in customTagLines)
+                                {
+                                    if (ctl.TargetCategoryLevel1 == r.CategoryLevel1)
+                                    {
+                                        if (ctl.TargetCategoryLevel2 == null || ctl.TargetCategoryLevel2 == r.CategoryLevel2)
+                                        {
+                                            if (ctl.TargetCategoryLevel3 == null || ctl.TargetCategoryLevel3 == r.CategoryLevel3)
+                                            {
+                                                lac.BrandAwarenessLine30 = ctl.BrandAwarenessLine30;
+                                                lac.BrandAwarenessLine50 = ctl.BrandAwarenessLine50;
+                                                lac.BrandAwarenessLine80 = ctl.BrandAwarenessLine80;
+                                                lac.PromoAwarenessLine30 = ctl.PromoAwarenessLine30;
+                                                lac.PromoAwarenessLine50 = ctl.PromoAwarenessLine50;
+                                                lac.PromoAwarenessLine80 = ctl.PromoAwarenessLine80;
+                                                lac.ActivationLine30 = ctl.ActivationLine30;
+                                                lac.ActivationLine50 = ctl.ActivationLine50;
+                                                lac.ActivationLine80 = ctl.ActivationLine80;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // todo: calculate fromPrice & numberofproducts for level2 and level3
+
+                                // avoid duplicate entries
+                                if (!hashtable.Contains(lac.CustomId))
+                                {
+                                    hashtable.Add(lac.CustomId);
+                                    items.Add(lac.Row);
+                                }
+                            }
+
+                        }
+                    }
+                }
+                return items;
+            }
+
+            static List<List<string>> GetReportsTableFromBccLocalProductsFeed(string data, bool downloadSample, string datatablesDirectory)
+            {
+                var rtn = new List<List<string>>(500000);
+                var counter = 0;
+                // get the latest bronfeed
+                var titleDict = new Dictionary<string, string>(500000);
+                var file = datatablesDirectory + "af82ace1-3ecd-4066-af79-e5e31976811f.csv";
+
+                using (TextReader fileReader = File.OpenText(file))
+                {
+                    var csv = new CsvReader(fileReader);
+                    var headers = csv.Parser.Read();
+                    // find the index of the id and the title field
+                    int titleIndex = -1;
+                    int idIndex = -1;
+                    for (var i = 0; i < headers.Length; i++)
+                    {
+                        if (headers[i] == "title") titleIndex = i;
+                        if (headers[i] == "id") idIndex = i;
+                    }
+                    // enumerate through the file and make dictionary with key:id and value:price
+                    while (true)
+                    {
+                        var row = csv.Parser.Read();
+                        if (row == null)
+                        {
+                            break;
+                        }
+                        var rowid = row[idIndex];
+                        var rowtitle = row[titleIndex];
+
+                        if (!titleDict.ContainsKey(rowid)) titleDict.Add(rowid, rowtitle);
+                    }
+                }
+                // add header
+                List<string> headerList = new List<string>();
+                List<string> distinctItems = new List<string>(500000);
+
+                headerList.Add("itemid");
+                headerList.Add("title");
+                rtn.Add(headerList);
+                // read xml from data
+                var xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(data);
+                // transform xml to local products inventory csv format
+                XmlNodeList products = xmlDoc.GetElementsByTagName("product");
+                foreach (XmlNode product in products) // cycle the products collection
+                {
+                    var itemId = product.SelectSingleNode("Product_id").InnerText;
+
+                    // find the price for this item in "BCC Bron Feed (latest)"
+                    if (!titleDict.ContainsKey(itemId)) continue;
+                    var title = titleDict[itemId];
+
+                    if (distinctItems.Contains(itemId)) continue;
+                    else distinctItems.Add(itemId);
+
+                    var r = new List<string>();
+                    r.Add(itemId);
+                    r.Add(title);
+                    rtn.Add(r);
+
+                    counter++;
+                    if (downloadSample && counter == 5) break;
+                }
+
+                return rtn;
+            }
+
+            static List<List<string>> GetReportsTableFromCsv(string data, string apiQuery, bool downloadSample = false)
+            {
+                var rtn = new List<List<string>>(500000);
+                var counter = 0;
+                var columns = apiQuery.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                // init csv parser
+                using (var csv = new CsvReader(new StringReader(data)))
+                {
+                    // insert header
+                    List<string> headerList = new List<string>();
+                    headerList.Add("Download date");
+                    headerList.Add("Download time");
+                    var headers = csv.Parser.Read();
+                    // find the columnIndex for the metrics/dimensions that we want to save
+                    List<int> columnIndexes = new List<int>();
+                    for(var i=0;i<headers.Length;i++)
+                    {
+                        if (columns.Contains(headers[i]))
+                        {
+                            columnIndexes.Add(i);
+                            headerList.Add(headers[i]);
+                        }
+                    }
+                    rtn.Add(headerList);
+                    // add data
+                    while(true)
+                    {
+                        var row = csv.Parser.Read();
+                        if (row == null) break;
+
+                        var r = new List<string>();
+                        r.Add(DateTime.Now.ToString("yyyyMMdd")); // add date
+                        r.Add(DateTime.Now.ToString("HH:mm")); // add time in format 23:59
+                        foreach(var i in columnIndexes)
+                        {
+                            r.Add(row[i]);
+                        }
+                        rtn.Add(r);
+
+                        counter++;
+                        if (downloadSample && counter == 50) break;
+                    }
+                }
+                return rtn;
+            }
+
 
             static List<List<string>> GetReportsTable(IList<Report> reports, string viewId)
             {
@@ -533,6 +926,7 @@ namespace RockDMZ.Features.ApiDatatable
             public int Id { get; set; }
             public string JsonSecret { get; set; }
             public string DatatablesTemporary { get; set; }
+            public string DatatablesDirectory { get; set; }
         }
 
         public class CommandValidator : AbstractValidator<Command>
@@ -555,40 +949,155 @@ namespace RockDMZ.Features.ApiDatatable
             public async Task Handle(Command message)
             {
                 try
-                { 
-                    var apiDatatable = await _db.ApiDatatables.FindAsync(message.Id);
+                {
+                    var apiDatatable = _db.ApiDatatables.Include("ServiceAccount").Where(i => i.Id == message.Id).SingleOrDefault();
 
                     apiDatatable.IsActive = true;
 
-                    // schedule initial download task
-                    BackgroundJob.Enqueue<GoogleAnalyticsReportingJob>(x => x.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
-                    // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
-                    //schedule recurring download
-                    if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
-                    { 
-                        var cronString = "";
-                        switch(apiDatatable.UpdateSchedule)
-                        {
-                            case UpdateSchedule.Daily4am:
-                                cronString = "0 4 * * *";
-                                break;
-                            case UpdateSchedule.Daily6am:
-                                cronString = "0 6 * * *";
-                                break;
-                            case UpdateSchedule.Daily8am:
-                                cronString = "0 8 * * *";
-                                break;
-                            case UpdateSchedule.Hourly:
-                                cronString = "0 * * * *";
-                                break;
-                            case UpdateSchedule.WeeklyMonday6am:
-                                cronString = "0 6 * * MON";
-                                break;
-                            default:
-                                break;
-                        }
-                        RecurringJob.AddOrUpdate<GoogleAnalyticsReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
-                        //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                    var cronString = "";
+
+                    Random random = new Random(DateTime.Now.Second);
+                    int randomNumber = random.Next(0, 60);
+
+                    switch (apiDatatable.UpdateSchedule)
+                    {
+                        case UpdateSchedule.Daily4am:
+                            cronString = randomNumber + " 4 * * *";
+                            break;
+                        case UpdateSchedule.Daily6am:
+                            cronString = randomNumber + " 6 * * *";
+                            break;
+                        case UpdateSchedule.Daily8am:
+                            cronString = randomNumber + " 8 * * *";
+                            break;
+                        case UpdateSchedule.Daily9am:
+                            cronString = randomNumber + " 9 * * *";
+                            break;
+                        case UpdateSchedule.Daily10am:
+                            cronString = randomNumber + " 10 * * *";
+                            break;
+                        case UpdateSchedule.Daily4pm:
+                            cronString = randomNumber + " 16 * * *";
+                            break;
+                        case UpdateSchedule.Daily5pm:
+                            cronString = randomNumber + " 17 * * *";
+                            break;
+                        case UpdateSchedule.Daily6pm:
+                            cronString = randomNumber + " 18 * * *";
+                            break;
+                        case UpdateSchedule.Daily7pm:
+                            cronString = randomNumber + " 19 * * *";
+                            break;
+                        case UpdateSchedule.Hourly:
+                            cronString = randomNumber + " * * * *";
+                            break;
+                        case UpdateSchedule.WeeklyMonday6am:
+                            cronString = randomNumber + " 6 * * MON";
+                            break;
+                        default:
+                            break;
+                    }
+
+                    switch (apiDatatable.ServiceAccount.ServiceName)
+                    {
+                        case ServiceName.GoogleAnalytics:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<GoogleAnalyticsReportingJob>(x => x.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<GoogleAnalyticsReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.CsvFeedAppend:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<CsvReportingJob>(x => x.RecurringDownload(apiDatatable.Id, true, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<CsvReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, true, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.CsvFeedOverwrite:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<CsvReportingJob>(x => x.RecurringDownload(apiDatatable.Id, false, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<CsvReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, false, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.BCCLocalInventoryFeed:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<BccInventoryFeedReportingJob>(x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<BccInventoryFeedReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.BCCLocalProductFeed:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<BccLocalProductFeedReportingJob>(x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<BccLocalProductFeedReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.BCCStoreStockTextAds:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<BccStoreStockTextAdsReportingJob>(x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<BccStoreStockTextAdsReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.BCCCategoryLevelBusinessData:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<BccCategoryLevelBusinessDataReportingJob>(x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<BccCategoryLevelBusinessDataReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        case ServiceName.BCCProductLevelBusinessData:
+                            // schedule initial download task
+                            BackgroundJob.Enqueue<BccProductLevelBusinessDataReportingJob>(x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory));
+                            // BackgroundJob.Enqueue(() => GoogleAnalyticsReportingJob.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary));
+                            //schedule recurring download
+                            if ((apiDatatable.LastDate != null && apiDatatable.LastDate >= DateTime.Today) || apiDatatable.UpdateSchedule != UpdateSchedule.None)
+                            {
+
+                                RecurringJob.AddOrUpdate<BccProductLevelBusinessDataReportingJob>("datatable_" + apiDatatable.Id, x => x.RecurringDownload(apiDatatable.Id, 0, message.DatatablesDirectory), cronString, TimeZoneInfo.Local);
+                                //RecurringJob.AddOrUpdate("datatable_" + apiDatatable.Id, () => QueryHandler.RecurringDownload(apiDatatable.Id, message.JsonSecret, message.DatatablesTemporary), cronString, TimeZoneInfo.Local);
+                            }
+                            break;
+                        default:
+                            throw new Exception("Unknown service name");
                     }
 
                     _db.SaveChanges();

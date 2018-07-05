@@ -42,6 +42,10 @@ namespace RockDMZ.Features.ApiDatatable
 
             public class ApiColumn
             {
+                public ApiColumn()
+                {
+                    Kind = "standard";
+                }
                 public string Id { get; set; }
                 public string uiName { get; set; }
                 public string Description { get; set; }
@@ -51,6 +55,20 @@ namespace RockDMZ.Features.ApiDatatable
                 public bool AllowedInSegments { get; set; }
                 public string Calculation { get; set; }
                 public bool Selected { get; set; }
+                public string Kind { get ; set; }
+            }
+
+            public class CustomApiColumn : ApiColumn
+            {
+                public CustomApiColumn()
+                {
+                    Kind = "customdimension";
+                }
+
+                public bool? Active { get; set;}
+                public DateTime? Created { get; set; }
+                public DateTime? Updated { get; set; }
+                public string Scope { get; set; }
             }
         }
 
@@ -97,23 +115,99 @@ namespace RockDMZ.Features.ApiDatatable
                     HttpClientInitializer = credential,
                     ApplicationName = "RockDMZ"
                 });
+
                 var list = svc.Metadata.Columns.List("ga");
                 var feed = list.Execute();
 
                 foreach (var c in feed.Items)
                 {
-                    var a = new ApiColumn();
-                    a.AllowedInSegments = c.Attributes.ContainsKey("allowedInSegments") ? Convert.ToBoolean(c.Attributes["allowedInSegments"]) : false;
-                    a.uiName = c.Attributes["uiName"];
-                    a.Calculation = c.Attributes.ContainsKey("calculation") ? c.Attributes["calculation"] : "";
-                    a.Description = c.Attributes["description"];
-                    a.Group = c.Attributes["group"];
-                    a.Id = c.Id;
-                    a.Status = c.Attributes["status"];
-                    a.Type = c.Attributes["type"];
-                    a.Selected = (metricIds != null && metricIds.Contains(a.Type == "METRIC" ? "m|" + a.Id : "d|" + a.Id));
-                    apiColumns.Add(a);
+                    if (c.Attributes["uiName"].IndexOf("XX", StringComparison.CurrentCulture) != -1) // add api columns for GOALS 1-20
+                    {
+                        for(var i=1;i<21;i++)
+                        {
+                            var a = new ApiColumn();
+                            a.AllowedInSegments = c.Attributes.ContainsKey("allowedInSegments") ? Convert.ToBoolean(c.Attributes["allowedInSegments"]) : false;
+                            a.uiName = c.Attributes["uiName"].Replace("XX",i.ToString());
+                            a.Calculation = c.Attributes.ContainsKey("calculation") ? c.Attributes["calculation"] : "";
+                            a.Description = c.Attributes["description"];
+                            a.Group = c.Attributes["group"];
+                            a.Id = c.Id.Replace("XX", i.ToString());
+                            a.Status = c.Attributes["status"];
+                            a.Type = c.Attributes["type"];
+                            a.Selected = (metricIds != null && metricIds.Contains(a.Type == "METRIC" ? "m|" + a.Id : "d|" + a.Id));
+                            apiColumns.Add(a);
+                        }
+                    }
+                    else
+                    {
+                        var a = new ApiColumn();
+                        a.AllowedInSegments = c.Attributes.ContainsKey("allowedInSegments") ? Convert.ToBoolean(c.Attributes["allowedInSegments"]) : false;
+                        a.uiName = c.Attributes["uiName"];
+                        a.Calculation = c.Attributes.ContainsKey("calculation") ? c.Attributes["calculation"] : "";
+                        a.Description = c.Attributes["description"];
+                        a.Group = c.Attributes["group"];
+                        a.Id = c.Id;
+                        a.Status = c.Attributes["status"];
+                        a.Type = c.Attributes["type"];
+                        a.Selected = (metricIds != null && metricIds.Contains(a.Type == "METRIC" ? "m|" + a.Id : "d|" + a.Id));
+                        apiColumns.Add(a);
+                    }
+                }
 
+                // get the accountid and propertyid of the first view in viewIds
+                var accounts = svc.Management.AccountSummaries.List();
+                var accountsFeed = accounts.Execute();
+                var accountId = "";
+                var propertyId = "";
+                var breakFlag = false;
+
+                while (accountsFeed.Items != null)
+                {
+                    foreach (AccountSummary account in accountsFeed.Items)
+                    {
+                        accountId = account.Id;
+                        foreach (WebPropertySummary wp in account.WebProperties)
+                        {
+                            propertyId = wp.Id;
+                            if (wp.Profiles != null)
+                            {
+                                foreach (ProfileSummary profile in wp.Profiles)
+                                {
+                                    if (profile.Id == viewIds[0]) { breakFlag = true; break; }
+                                }
+                            }
+                            if (breakFlag) break;
+                        }
+                        if (breakFlag) break;
+                    }
+                    if (accountsFeed.NextLink == null || breakFlag) break;
+
+                    accounts.StartIndex = accountsFeed.StartIndex + 1000;
+
+                    accountsFeed = accounts.Execute();
+                }
+
+                // list customdimensions using management api
+                var cdList = svc.Management.CustomDimensions.List(accountId, propertyId);
+                var customDimensions = cdList.Execute();
+
+                foreach (var c in customDimensions.Items)
+                {
+                    var a = new CustomApiColumn();
+                    a.Id = c.Id;
+                    a.uiName = c.Name;
+                    a.Scope = c.Scope;
+                    a.Created = c.Created;
+                    a.Calculation = "";
+                    a.Group = "";
+                    a.Description = "";
+                    a.AllowedInSegments = true;
+                    a.Updated = c.Updated;
+                    a.Active = c.Active;
+                    a.Status = a.Active == true ? "ACTIVE" : "INACTIVE"; 
+                    a.Type = "CUSTOMDIMENSION";
+                    a.Selected = (metricIds != null && metricIds.Contains("cd|" + a.Id));
+                    apiColumns.Add(a);
                 }
 
                 return apiColumns;

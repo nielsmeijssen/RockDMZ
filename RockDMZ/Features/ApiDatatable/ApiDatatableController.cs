@@ -56,7 +56,28 @@ namespace RockDMZ.Features.ApiDatatable
         {
             await _mediator.Send(command);
 
-            return this.RedirectToActionJson(nameof(EditViews), new { Id = command.Id });
+            switch(command.ServiceName)
+            {
+                case Domain.ServiceName.GoogleAnalytics:
+                    return this.RedirectToActionJson(nameof(EditViews), new { Id = command.Id });
+                case Domain.ServiceName.CsvFeedAppend:
+                    return this.RedirectToActionJson(nameof(EditCsvMetrics), new { Id = command.Id });
+                case Domain.ServiceName.CsvFeedOverwrite:
+                    return this.RedirectToActionJson(nameof(EditCsvMetrics), new { Id = command.Id });
+                case Domain.ServiceName.BCCLocalInventoryFeed:
+                    return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+                case Domain.ServiceName.BCCLocalProductFeed:
+                    return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+                case Domain.ServiceName.BCCStoreStockTextAds:
+                    return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+                case Domain.ServiceName.BCCCategoryLevelBusinessData:
+                    return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+                case Domain.ServiceName.BCCProductLevelBusinessData:
+                    return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+                default:
+                    throw new System.Exception("Unknown ServiceName");
+            }
+            
         }
 
         public async Task<IActionResult> EditViews(EditViews.Query query)
@@ -84,6 +105,22 @@ namespace RockDMZ.Features.ApiDatatable
             return View(model);
         }
 
+        public async Task<IActionResult> EditCsvMetrics(EditCsvMetrics.Query query)
+        {
+            var model = await _mediator.Send(query);
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCsvMetrics(EditCsvMetrics.Command command)
+        {
+            await _mediator.Send(command);
+
+            return this.RedirectToActionJson(nameof(EditLaunch), new { Id = command.Id });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditMetrics(EditMetrics.Command command)
@@ -96,6 +133,7 @@ namespace RockDMZ.Features.ApiDatatable
         public async Task<IActionResult> EditLaunch(EditLaunch.Query query)
         {
             query.JsonSecret = _servicesContext.GoogleAnalytics.JsonSecret;
+            query.DatatablesDirectory = _fileStorage.Datatables;
             var model = await _mediator.Send(query);
 
             return View(model);
@@ -107,6 +145,7 @@ namespace RockDMZ.Features.ApiDatatable
         {
             command.JsonSecret = _servicesContext.GoogleAnalytics.JsonSecret;
             command.DatatablesTemporary = _fileStorage.DatatablesTemporary;
+            command.DatatablesDirectory = _fileStorage.Datatables;
             await _mediator.Send(command);
 
             return this.RedirectToActionJson(nameof(Index));

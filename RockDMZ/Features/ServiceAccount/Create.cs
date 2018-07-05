@@ -24,6 +24,7 @@
         {
             public ServiceName ServiceName { get; set; }
             public CredentialType CredentialType { get; set; }
+            public string ServiceLocation { get; set; }
             public string Email { get; set; }
             public string Password { get; set; }
             public string JsonSecret { get; set; }
@@ -38,6 +39,7 @@
             {
                 RuleFor(m => m.ServiceName).NotNull();
                 RuleFor(m => m.CredentialType).NotNull();
+                RuleFor(m => m.ServiceLocation).MaximumLength(255);
                 RuleFor(m => m.Email).NotNull().Length(5, 255);
                 RuleFor(m => m.Password).NotNull().When(m => m.CredentialType.Equals(CredentialType.Service));                
             }

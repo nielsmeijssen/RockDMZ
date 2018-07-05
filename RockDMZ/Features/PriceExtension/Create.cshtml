@@ -1,0 +1,49 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.PriceExtension
+@model Create.Command
+@{
+    ViewBag.Title = "Create";
+}
+<h2>Create</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+<div class="form-horizontal">
+    <h4>Price Extension Project</h4>
+    <hr />
+    @Html.ValidationDiv()
+    @Html.FormBlock(m => m.Name)
+    <div class="form-group">
+        <label asp-for="ProductFeedLocation" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <select asp-for="ProductFeedLocation" asp-items="Model.ProductFeedLocations" class="form-control"></select>
+            <span asp-validation-for="ProductFeedLocation" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="ProductPerformanceFeedLocation" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <select asp-for="ProductPerformanceFeedLocation" asp-items="Model.ProductPerformanceFeedLocations" class="form-control"></select>
+            <span asp-validation-for="ProductPerformanceFeedLocation" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="ProcessingQuery" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <textarea asp-for="ProcessingQuery" class="form-control" rows="20" cols="40"></textarea>
+            <span asp-validation-for="ProcessingQuery" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" value="Create" class="btn btn-default" />
+        </div>
+    </div>
+</div>
+}
+<div>
+    @Html.ActionLink("Back to List", nameof(PriceExtensionController.Index))
+</div>

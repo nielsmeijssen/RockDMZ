@@ -49,5 +49,5 @@ namespace RockDMZ.Domain
         public bool IsActive { get; set; }
     }
 
-    public enum UpdateSchedule { None, Hourly, Daily4am, Daily6am, Daily8am, WeeklyMonday6am }
+    public enum UpdateSchedule { None, Hourly, Daily4am, Daily6am, Daily8am, WeeklyMonday6am, Daily9am, Daily10am, Daily4pm, Daily5pm, Daily6pm, Daily7pm }
 }

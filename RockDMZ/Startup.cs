@@ -85,7 +85,11 @@
 
             app.UseStaticFiles();
             app.UseHangfireServer();
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard("/tasks", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireAuthorizationFilter() }
+            });
+            
 
             app.UseMvc(routes =>
             {

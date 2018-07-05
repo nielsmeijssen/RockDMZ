@@ -39,6 +39,7 @@ namespace RockDMZ.Features.ApiDatatable
             {
                 var rtn = await _db.ApiDatatables.Where(c => c.Id == message.Id).ProjectToSingleOrDefaultAsync<Command>();
                 rtn.ServiceAccounts = new SelectList(_db.ServiceAccounts, "Id", "FriendlyName", rtn.ServiceAccountId);
+                rtn.ServiceName = _db.ServiceAccounts.Where(x => x.Id == rtn.ServiceAccountId).SingleOrDefault().ServiceName;
                 return rtn;
             }
         }
@@ -57,6 +58,8 @@ namespace RockDMZ.Features.ApiDatatable
             public UpdateSchedule UpdateSchedule { get; set; }
             public int LookbackWindowInDays { get; set; }
             public SelectList ServiceAccounts { get; set; }
+            public ServiceName ServiceName { get; set; }
+
         }
 
         public class CommandValidator : AbstractValidator<Command>

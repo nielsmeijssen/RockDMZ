@@ -40,8 +40,12 @@ namespace RockDMZ.Features.ServiceAccount
         {
             try
             {
-                command.JsonSecret = _servicesContext.GoogleAnalytics.JsonSecret;
-                command.CredentialsDirectory = _fileStorage.Credentials;
+                if (command.ServiceName == Domain.ServiceName.GoogleAnalytics)
+                {
+                    command.JsonSecret = _servicesContext.GoogleAnalytics.JsonSecret;
+                    command.CredentialsDirectory = _fileStorage.Credentials;
+                }
+                
                 await _mediator.Send(command);
 
                 return this.RedirectToActionJson(nameof(Index));

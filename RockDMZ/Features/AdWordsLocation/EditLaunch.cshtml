@@ -1,0 +1,62 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.AdWordsLocation
+@model EditLaunch.Command
+@{
+    ViewBag.Title = "Edit";
+}
+@section JavaScript
+    {
+    <script language="javascript">
+        
+    </script>
+}
+<h2>Launch</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>AdWords Location Project - Launch</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.Input(model => model.Id)
+        <div class="form-group">
+            <label asp-for="Name" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.Name)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="KmRange" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.KmRange)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="MultipleResults" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.MultipleResults)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="OutputFormat" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.Display(model => model.OutputFormat)
+            </div>
+        </div>
+        <div class="form-group">
+            <label asp-for="JsArray" class="col-md-2 control-label"></label>
+            <div class="col-md-10">
+                @Html.TextAreaFor(model => model.JsArray, 20, 50, new { })
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Launch" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

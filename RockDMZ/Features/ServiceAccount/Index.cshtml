@@ -12,24 +12,28 @@
         <input type="submit" value="Filter" />
     </p>
 </form>
-<table class="table">
-    <tr>
-        <th>
-            Id
-        </th>
-        <th>
-            Service name
-        </th>
-        <th>
-            CredentialType
-        </th>
-<th>
-            Email
-        </th>
-        <th></th>
-    </tr>
-    @{ int i = 0;}
-    @foreach (var item in Model.ServiceAccounts)
+<table class="table tablesorter table-hover table-condensed table-sm">
+    <thead class="thead-dark">
+        <tr>
+            <th>
+                Id
+            </th>
+            <th>
+                Service name
+            </th>
+            <th>
+                CredentialType
+            </th>
+            <th>Service Location</th>
+            <th>
+                Email
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ int i = 0;}
+        @foreach (var item in Model.ServiceAccounts)
     {
         <tr>
             <td>
@@ -41,6 +45,7 @@
             <td>
                 @Html.Display(modelItem => modelItem.ServiceAccounts[i].CredentialType)
             </td>
+            <td>@Html.Display(modelItem => modelItem.ServiceAccounts[i].ServiceLocation)</td>
             <td>
                 @Html.Display(modelItem => modelItem.ServiceAccounts[i].Email)
             </td>
@@ -50,6 +55,7 @@
                 @Html.ActionLink("Delete", "Delete", new { id = item.Id })
             </td>
         </tr>
-        i++;
-    }
+    i++;
+}
+    </tbody>
 </table>

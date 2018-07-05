@@ -2,81 +2,133 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>@ViewData["Title"] - RockDMZ</title>
 
     <environment names="Development">
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
         <link rel="stylesheet" href="~/css/site.css" />
         <link rel="stylesheet" href="~/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker3.css" />
         <link rel="stylesheet" href="~/lib/tablesorter/css/theme.blue.css" />
     </environment>
     <environment names="Staging,Production">
-        <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/css/bootstrap.min.css"
-              asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
-              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
-        <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+        <link rel="stylesheet" href="~/css/site.css" />
         <link rel="stylesheet" href="~/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker3.css" />
+        <link rel="stylesheet" href="~/lib/tablesorter/css/theme.blue.css" />
     </environment>
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a asp-area="" asp-controller="Home" asp-action="Index" class="navbar-brand">RockDMZ</a>
-            </div>
-            <div class="navbar-collapse collapse">
-                <ul class="nav navbar-nav">
-                    <li><a asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
-                    <li><a asp-area="" asp-controller="Home" asp-action="About">About</a></li>
-                    <li><a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a></li>
-                    <li><a asp-area="" asp-controller="Student" asp-action="Index">Students</a></li>
-                    <li><a asp-area="" asp-controller="Course" asp-action="Index">Courses</a></li>
-                    <li><a asp-area="" asp-controller="Instructor" asp-action="Index">Instructors</a></li>
-                    <li><a asp-area="" asp-controller="ServiceAccount" asp-action="Index">Service Accounts</a></li>
-                </ul>
-            </div>
+    <header class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar">
+        <div class="navbar-nav-scroll">
+            <ul class="navbar-nav bd-navbar-nav flex-row">
+                <li class="nav-item">
+                    <a class="nav-link " href="/" style="color:#fff">6Circles</a>
+                </li>
+                @*<li class="nav-item">
+                    <a class="nav-link active" href="/">Documentation</a>
+                </li>*@
+            </ul>
         </div>
-    </div>
-    <div class="container body-content">
-        @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; 2016 - RockDMZ</p>
-        </footer>
+    </header>
+    <div class="container-fluid">
+        <div class="row flex-xl-nowrap">
+            <div class="col-12 col-md-3 col-xl-2 bd-sidebar">
+                <nav class="bd-links" id="bd-docs-nav">
+                    <div class="bd-toc-item">
+                        <a class="bd-toc-link" href="/apidatatable/">
+                            Datapumps
+                        </a>
+                    </div>
+                    <div class="bd-toc-item">
+                        <a class="bd-toc-link" href="">
+                            Business Data
+                        </a>
+
+                        <ul class="nav bd-sidenav">
+                            <li>
+                                <a href="/adwordscustomtagline/">
+                                    Tag lines
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bd-toc-item">
+                        <a class="bd-toc-link" href="">
+                            Search Ad Generator
+                        </a>
+                    </div>
+                    <div class="bd-toc-item">
+                        <a class="bd-toc-link" href="#navextensions" data-toggle="collapse">
+                            Ad Extensions
+                        </a>
+
+                        <ul class="nav bd-sidenav collapse" id="navextensions">
+                            <li>
+                                <a href="/priceextension/">
+                                    Price extension
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/promotionextension/">
+                                    Promotion extension
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bd-toc-item">
+                        <a class="bd-toc-link" href="">
+                            Settings
+                        </a>
+
+                        <ul class="nav bd-sidenav">
+                            <li>
+                                <a href="/serviceaccount/">
+                                    Service account
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+
+            <main class="col-12 col-md-9 col-xl-8 py-md-3 pl-md-5 bd-content" role="main">
+                @RenderBody()
+                <hr />
+                <footer>
+                    <p>&copy; 2018 - RockDMZ</p>
+                </footer>
+            </main>
+        </div>
     </div>
 
     <environment names="Development">
-        <script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+        @*<script src="~/lib/jquery/dist/jquery.js"></script>
         <script src="~/lib/lodash/dist/lodash.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>*@
         <script src="~/lib/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
         <script src="~/lib/tablesorter/js/jquery.tablesorter.js"></script>
         <script src="~/lib/tablesorter/js/jquery.tablesorter.widgets.js"></script>
         <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/lib/jquery-text-counter/textcounter.min.js"></script>
     </environment>
     <environment names="Staging,Production">
-        <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"
-                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
-                asp-fallback-test="window.jQuery">
-        </script>
-        <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.6/bootstrap.min.js"
-                asp-fallback-src="~/lib/bootstrap/dist/js/bootstrap.min.js"
-                asp-fallback-test="window.jQuery && window.jQuery.fn && window.jQuery.fn.modal">
-        </script>
-        <script src="~/lib/lodash/dist/lodash.min.js"></script>
-        <script src="~/lib/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js" asp-append-version="true"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+        @*<script src="~/lib/jquery/dist/jquery.js"></script>
+        <script src="~/lib/lodash/dist/lodash.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>*@
+        <script src="~/lib/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
         <script src="~/lib/tablesorter/js/jquery.tablesorter.js"></script>
         <script src="~/lib/tablesorter/js/jquery.tablesorter.widgets.js"></script>
-        <script src="~/js/site.min.js" asp-append-version="true"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/lib/jquery-text-counter/textcounter.min.js"></script>
     </environment>
 
-    @RenderSection("JavaScript", required: false)
+                    @RenderSection("JavaScript", required: false)
 </body>
 </html>

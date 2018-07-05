@@ -1,0 +1,37 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.AdWordsLocation
+@model Create.Command
+@{
+    ViewBag.Title = "Create";
+}
+<h2>Create</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+<div class="form-horizontal">
+    <h4>AdWords Location Project</h4>
+    <hr />
+    @Html.ValidationDiv()
+    @Html.FormBlock(m => m.Name)
+    @Html.FormBlock(m => m.KmRange)
+    @Html.FormBlock(m => m.MultipleResults)
+    <div class="form-group">
+        <label asp-for="OutputFormat" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <select asp-for="OutputFormat" asp-items="Html.GetEnumSelectList<OutputFormat>()" class="form-control"></select>
+            <span asp-validation-for="OutputFormat" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" value="Create" class="btn btn-default" />
+        </div>
+    </div>
+</div>
+}
+<div>
+    @Html.ActionLink("Back to List", nameof(AdWordsLocationController.Index))
+</div>

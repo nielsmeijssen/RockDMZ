@@ -1,0 +1,111 @@
+﻿@using RockDMZ.Features
+@using RockDMZ.Domain
+@using RockDMZ.Features.AdWordsCustomTagLine
+@model Edit.Command
+@{
+    ViewBag.Title = "Edit";
+}
+<h2>Edit Tag Lines</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>AdWords Location Project</h4>
+        <hr />
+        @Html.ValidationDiv()
+        @Html.HiddenFor(model => model.Id)
+        @Html.FormBlock(m => m.ClientName)
+        @Html.FormBlock(m => m.CreationDate)
+        @Html.FormBlock(m => m.TargetCategoryLevel1)
+        @Html.FormBlock(m => m.TargetCategoryLevel2)
+        @Html.FormBlock(m => m.TargetCategoryLevel3)
+        @Html.FormBlock(m => m.TargetSourceFeedPromoLine)
+        @Html.FormBlock(m => m.ProductLevelPromoLine30)
+        @Html.FormBlock(m => m.ProductLevelPromoLine50)
+        @Html.FormBlock(m => m.ProductLevelPromoLine80)
+        @Html.FormBlock(m => m.BrandAwarenessLine30)
+        @Html.FormBlock(m => m.BrandAwarenessLine50)
+        @Html.FormBlock(m => m.BrandAwarenessLine80)
+        @Html.FormBlock(m => m.PromoAwarenessLine30)
+        @Html.FormBlock(m => m.PromoAwarenessLine50)
+        @Html.FormBlock(m => m.PromoAwarenessLine80)
+        @Html.FormBlock(m => m.ActivationLine30)
+        @Html.FormBlock(m => m.ActivationLine50)
+        @Html.FormBlock(m => m.ActivationLine80)
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+<div>
+    @Html.ActionLink("Back to List", nameof(AdWordsCustomTagLineController.Index))
+</div>
+@section JavaScript
+    {
+        <script language="javascript">
+            $('#ProductLevelPromoLine30').textcounter({
+                max: 30,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#ProductLevelPromoLine50').textcounter({
+                max: 50,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#ProductLevelPromoLine80').textcounter({
+                max: 80,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#BrandAwarenessLine30').textcounter({
+                max: 30,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#BrandAwarenessLine50').textcounter({
+                max: 50,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#BrandAwarenessLine80').textcounter({
+                max: 80,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#PromoAwarenessLine30').textcounter({
+                max: 30,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#PromoAwarenessLine50').textcounter({
+                max: 50,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#PromoAwarenessLine80').textcounter({
+                max: 80,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#ActivationLine30').textcounter({
+                max: 30,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#ActivationLine50').textcounter({
+                max: 50,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+            $('#ActivationLine80').textcounter({
+                max: 80,
+                countDownText: "%d characters remaining",
+                stopInputAtMaximum: true
+            });
+        </script>
+    }
